@@ -96,7 +96,7 @@ class App(QWidget):
 				return True
 			elif webex_token_request.status_code == 428:
 				print("we need to wait for the user still. Sleeping for ")
-				time.sleep(30)
+				time.sleep(10)
 			else:
 				print(f"Some other failure{webex_token_request.status_code} {webex_token_request.text}")
 
@@ -117,8 +117,9 @@ class App(QWidget):
 		if self.webex_token():
 			print("Got Token")
 			window = RecordingList(device_token=self.device_token)
-			window.show()
 			self.close()
+			window.show()
+
 		else:
 			print("No Token :-(")
 			QMessageBox.information(self, "Pass Code", "Not able to obtain a token for some reason. You can exit and try again.")
@@ -145,9 +146,13 @@ class RecordingList(QWidget):
 			list_widget.addItem(recording)
 			print(recording)
 		list_widget.itemDoubleClicked.connect(self.recording_selected)
+		vbox.addWidget(list_widget)
+		self.setLayout(vbox)
+		print("We should be about to show the List of recordings")
 		self.show()
 
 	def get_recording_list(self):
+		# QApplication.processEvents()
 		headers = {"Content-Type": "application/json","Authorization": f"Bearer {self.device_token}"}
 		# just using a range i know i have some recordings.
 		recordings_from = "2022-09-25T00:00:00+00:00"
@@ -174,14 +179,17 @@ class RecordingList(QWidget):
 		return retrieved_recordings
 
 	def recording_selected(self, item):
+		#QApplication.processEvents()
 		for recording in self.all_recordings:
 			if recording["title"] == item:
 				link = recording["playback"]
 				passcode = recording["passcode"]
+				print(link)
+				print(passcode)
 				break
 		new_window = ViewRecording(recording=link, passcode=passcode)
-		new_window.show()
 		self.close()
+		new_window.show()
 
 
 class ViewRecording(QMainWindow):
