@@ -19,12 +19,9 @@ def init():
     client_id = os.getenv("CLIENT-ID")
     client_secret = os.getenv("CLIENT-SECRET")
     code_verifier = os.getenv("CODE-VERIFIER")
-    #hashed_verifier = hashlib.sha256(code_verifier.encode('ascii')).hexdigest()
-    #code_challenge = base64.b64encode(hashed_verifier.encode('ascii')).decode('ascii')
-    #code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode('ascii')).digest()).decode('ascii')
-    #code_challenge = code_verifier
     hashed_verifier = hashlib.sha256(code_verifier.encode('ascii')).digest()
     code_challenge = base64.urlsafe_b64encode(hashed_verifier).decode('ascii')
+    code_challenge = code_challenge.rstrip("=")
     print(code_challenge)
     if request.method == "GET":
         try:
