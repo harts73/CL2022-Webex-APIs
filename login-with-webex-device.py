@@ -3,7 +3,7 @@ import sys
 import urllib.parse
 import qrcode
 from PyQt6.QtWebEngineWidgets import *
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QMessageBox, QListWidget, QMainWindow
+from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QMessageBox, QListWidget, QMainWindow, QStackedLayout
 from PyQt6.QtGui import QIcon, QPixmap, QImage, QPainter
 import PyQt6.QtCore as QtCore
 import requests
@@ -38,16 +38,21 @@ class Image(qrcode.image.base.BaseImage):
 
 
 # This is where we create the pyqt app. not going to be MVC but all chucked in together for speed
-class App(QWidget):
+class App(QMainWindow):
 
-	def __init__(self, ci=None, cs=None, rd=None):
-		super().__init__()
+	def __init__(self, ci=None, cs=None, rd=None, parent=None):
+		super(App, self).__init__(parent)
+		self.layout_for_wids = QStackedLayout()
+		self.qr_widget = QWidget()
+		self.recording_widget = QWidget()
+		self.new_window = None
 		self.ci = ci
 		self.cs = cs
 		self.rd = rd
 		self.auth_interval = None
 		self.auth_device_code = None
 		self.device_token = None
+		self.all_recordings = []
 		self.title = 'Login with Webex - Device Flow'
 		self.left = 10
 		self.top = 10
@@ -95,50 +100,37 @@ class App(QWidget):
 				print(token_json)
 				return True
 			elif webex_token_request.status_code == 428:
-				print("we need to wait for the user still. Sleeping for ")
+				print("we need to wait for the user still, they have 2 minutes in this script. Sleeping for 10 seconds")
 				time.sleep(10)
 			else:
 				print(f"Some other failure{webex_token_request.status_code} {webex_token_request.text}")
 
-			if loops_number > 5:
+			if loops_number > 10:
 				print("User never completed")
 				return False
 
 	def initUI(self):
 		img2 = self.webex_qr()
-		self.setWindowTitle(self.title)
-		self.setGeometry(self.left, self.top, self.width, self.height)
-
-		# Create widget
+		self.qr_widget.setWindowTitle(self.title)
+		self.qr_widget.setGeometry(self.left, self.top, self.width, self.height)
 		label = QLabel(self)
 		label.setPixmap(img2)
-		self.resize(img2.width(), img2.height())
-		self.show()
+		vbox = QVBoxLayout()
+		vbox.addWidget(label)
+		self.qr_widget.setLayout(vbox)
+		self.qr_widget.resize(img2.width(), img2.height())
+		self.recording_widget.hide()
+		self.qr_widget.show()
 		if self.webex_token():
 			print("Got Token")
-			window = RecordingList(device_token=self.device_token)
-			self.close()
-			window.show()
-
+			self.listUI()
 		else:
 			print("No Token :-(")
 			QMessageBox.information(self, "Pass Code", "Not able to obtain a token for some reason. You can exit and try again.")
+			sys.exit()
 
-
-class RecordingList(QWidget):
-	# this one is to show the recordings.
-	def __init__(self, device_token=None):
-		super().__init__()
-		self.device_token = device_token
-		self.title = 'Login with Webex - Device Flow'
-		self.all_recordings = []
-		self.left = 10
-		self.top = 10
-		self.width = 800
-		self.height = 600
-		self.initUI()
-
-	def initUI(self):
+	def listUI(self):
+		print("In listUI")
 		vbox = QVBoxLayout(self)
 		list_widget = QListWidget()
 		the_recordings = self.get_recording_list()
@@ -147,9 +139,10 @@ class RecordingList(QWidget):
 			print(recording)
 		list_widget.itemDoubleClicked.connect(self.recording_selected)
 		vbox.addWidget(list_widget)
-		self.setLayout(vbox)
+		self.recording_widget.setLayout(vbox)
 		print("We should be about to show the List of recordings")
-		self.show()
+		self.qr_widget.hide()
+		self.recording_widget.show()
 
 	def get_recording_list(self):
 		# QApplication.processEvents()
@@ -180,26 +173,32 @@ class RecordingList(QWidget):
 
 	def recording_selected(self, item):
 		#QApplication.processEvents()
+		print(self.all_recordings)
+		print(f"We got {item.text()}")
+		link = None
 		for recording in self.all_recordings:
-			if recording["title"] == item:
+			if recording["title"] == item.text():
 				link = recording["playback"]
 				passcode = recording["passcode"]
 				print(link)
 				print(passcode)
 				break
-		new_window = ViewRecording(recording=link, passcode=passcode)
-		self.close()
-		new_window.show()
+		if link:
+			self.new_window = ViewRecording(recording=link, passcode=passcode)
+			self.new_window.show()
+		else:
+			QMessageBox.information(self, "Pass Code","We didn't get a link for some reason.")
 
 
 class ViewRecording(QMainWindow):
 	def __init__(self, recording=None, passcode=None):
 		super().__init__()
+		message_text = f"Pass code is {passcode}"
+		QMessageBox.information(self, "Pass Code", message_text)
 		web = QWebEngineView()
 		web.load(QtCore.QUrl(recording))
 		web.show()
-		message_text = f"Pass code is {passcode}"
-		QMessageBox.information(self, "Pass Code", message_text)
+
 
 
 if __name__ == '__main__':
@@ -208,6 +207,7 @@ if __name__ == '__main__':
 	client_id = os.getenv("CLIENT-ID")
 	client_secret = os.getenv("CLIENT-SECRET")
 	app = QApplication([])
+	app.setApplicationName('Login with Webex - Device Flow')
 	ex = App(ci=client_id, cs=client_secret, rd=redirect_uri)
 	ex.show()
 	sys.exit(app.exec())
