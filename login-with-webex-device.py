@@ -1,17 +1,14 @@
+from PyQt6.QtWidgets import *
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
+import PyQt6.QtCore as QtCore
+
+import qrcode
+import time
 import os
 import sys
 import urllib.parse
-import qrcode
-from PyQt6.QtWebEngineWidgets import *
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QMessageBox, QListWidget, QMainWindow, QStackedLayout
-from PyQt6.QtGui import QIcon, QPixmap, QImage, QPainter
-import PyQt6.QtCore as QtCore
 import requests
-import time
-
-
-# Example of how to use Login with Webex to authenticate a device E.g. TV.
-# Our scope in this one is simply to be able to read recordings for the logged-in user.
 
 
 class Image(qrcode.image.base.BaseImage):
@@ -37,15 +34,9 @@ class Image(qrcode.image.base.BaseImage):
         pass
 
 
-# This is where we create the pyqt app. not going to be MVC but all chucked in together for speed
-class App(QMainWindow):
-
+class MyWindow(QMainWindow):
 	def __init__(self, ci=None, cs=None, rd=None, parent=None):
-		super(App, self).__init__(parent)
-		self.layout_for_wids = QStackedLayout()
-		self.qr_widget = QWidget()
-		self.recording_widget = QWidget()
-		self.new_window = None
+		super(MyWindow, self).__init__(parent)
 		self.ci = ci
 		self.cs = cs
 		self.rd = rd
@@ -53,12 +44,68 @@ class App(QMainWindow):
 		self.auth_device_code = None
 		self.device_token = None
 		self.all_recordings = []
-		self.title = 'Login with Webex - Device Flow'
-		self.left = 10
-		self.top = 10
-		self.width = 800
-		self.height = 600
-		self.initUI()
+
+		# MAIN WINDOW size
+		self.setMinimumSize(800,600)
+
+		# CENTRAL WIDGET
+		self.central_wid = QWidget()
+		self.layout_for_wids = QStackedLayout()
+
+		# 2 WIDGETS
+		self.wid1 = QWidget()
+		link = "https://www.cisco.com"
+		qr = qrcode.QRCode(version=1, box_size=10, border=5)
+		qr.add_data(link)
+		img2 = self.webex_qr()
+		label = QLabel(self)
+		label.setPixmap(img2)
+		vbox = QVBoxLayout()
+		vbox.addWidget(label)
+		vbox.addStretch()
+		self.wid1.setLayout(vbox)
+		self.wid1.resize(img2.width(), img2.height())
+		self.wid2 = QWidget()
+
+		# LAYOUT CONTAINER FOR WIDGETS AND BUTTON
+		# self.layout_for_wids.addWidget(self.btn_switch)
+		self.layout_for_wids.addWidget(self.wid1)
+		self.layout_for_wids.addWidget(self.wid2)
+		# ENTERING LAYOUT
+		self.central_wid.setLayout(self.layout_for_wids)
+		# CHOOSE YOUR CENTRAL WIDGET
+		self.setCentralWidget(self.central_wid)
+		# WHICH WIDGET IS ON THE FRONT
+		self.show()
+		if self.webex_token():
+			print("Switching widgets")
+			self.switch_wids()
+		else:
+			print("Nothing")
+
+	def token(self):
+		QApplication.processEvents()
+		time.sleep(10)
+		return True
+
+	def switch_wids(self):
+		list_widget = QListWidget()
+		font = QFont()
+		font.setFamily("Arial")
+		font.setPointSize(40)
+		list_widget.setFont(font)
+		the_recordings = self.get_recording_list()
+		for recording in the_recordings:
+			list_widget.addItem(recording)
+			print(recording)
+		list_widget.setMinimumSize(QtCore.QSize(1200, 700))
+		vbox = QVBoxLayout()
+		vbox.addWidget(list_widget)
+		vbox.addStretch()
+		self.wid2.setLayout(vbox)
+		self.wid2.setMinimumSize(QtCore.QSize(1280, 720))
+		self.wid1.hide()
+		self.wid2.show()
 
 	def webex_qr(self):
 		# get the URL and create the QR code.
@@ -90,7 +137,7 @@ class App(QMainWindow):
 		while not self.device_token:
 			loops_number = loops_number + 1
 			try:
-				webex_token_request = requests.post(webex_token_url, headers=auth_headers, params=webex_token_params,auth=(self.ci, self.cs))
+				webex_token_request = requests.post(webex_token_url, headers=auth_headers, params=webex_token_params, auth=(self.ci, self.cs))
 			except:
 				print(f"Failed to get the token url {webex_token_request.status_code} {webex_token_request.text}")
 				return False
@@ -109,50 +156,14 @@ class App(QMainWindow):
 				print("User never completed")
 				return False
 
-	def initUI(self):
-		img2 = self.webex_qr()   # Let's generate the QR Code for authentication.
-		# format the window for the QR code to be displayed
-		self.qr_widget.setWindowTitle(self.title)
-		self.qr_widget.setGeometry(self.left, self.top, self.width, self.height)
-		label = QLabel(self)
-		label.setPixmap(img2)
-		vbox = QVBoxLayout()
-		vbox.addWidget(label)
-		self.qr_widget.setLayout(vbox)
-		self.qr_widget.resize(img2.width(), img2.height())
-		self.recording_widget.hide()
-		self.qr_widget.show()
-		if self.webex_token():
-			print("Got Token")
-			self.listUI()
-		else:
-			print("No Token :-(")
-			QMessageBox.information(self, "Pass Code", "Not able to obtain a token for some reason. You can exit and try again.")
-			sys.exit()
-
-	def listUI(self):
-		print("In listUI")
-		vbox = QVBoxLayout(self)
-		list_widget = QListWidget()
-		the_recordings = self.get_recording_list()
-		for recording in the_recordings:
-			list_widget.addItem(recording)
-			print(recording)
-		#list_widget.itemDoubleClicked.connect(self.recording_selected)
-		vbox.addWidget(list_widget)
-		self.recording_widget.setLayout(vbox)
-		print("We should be about to show the List of recordings")
-		self.qr_widget.hide()
-		self.recording_widget.show()
-
 	def get_recording_list(self):
 		# QApplication.processEvents()
-		headers = {"Content-Type": "application/json","Authorization": f"Bearer {self.device_token}"}
+		headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.device_token}"}
 		# just using a range I know I have some recordings.
 		recordings_from = "2022-09-25T00:00:00+00:00"
 		recordings_to = "2022-09-27T23:59:00+00:00"
 		retrieved_recordings = []
-		recording_uri = f"""from={recordings_from}&to={recordings_to}&max=10"""   # restricting 10 recordings but you could get them all using pagination
+		recording_uri = f"""from={recordings_from}&to={recordings_to}&max=10"""  # restricting 10 recordings but you could get them all using pagination
 		parsed_recording_uri = urllib.parse.quote(recording_uri, safe="=&[]")
 		# print(parsed_recording_uri)
 		recordings_url = f"https://webexapis.com/v1/recordings?{parsed_recording_uri}"
@@ -173,13 +184,16 @@ class App(QMainWindow):
 		return retrieved_recordings
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	redirect_uri = os.getenv("REDIRECT")
 	parsed_redirect_uri = urllib.parse.quote(redirect_uri, safe="=&!")
 	client_id = os.getenv("CLIENT-ID")
 	client_secret = os.getenv("CLIENT-SECRET")
 	app = QApplication([])
 	app.setApplicationName('Login with Webex - Device Flow')
-	ex = App(ci=client_id, cs=client_secret, rd=redirect_uri)
-	ex.show()
+	main = MyWindow(ci=client_id, cs=client_secret, rd=redirect_uri)
+	main.resize(1280, 720)
+	main.setMinimumSize(1280, 720)
+	main.show()
 	sys.exit(app.exec())
+
