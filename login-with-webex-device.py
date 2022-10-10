@@ -148,7 +148,7 @@ class App(QMainWindow):
 	def get_recording_list(self):
 		# QApplication.processEvents()
 		headers = {"Content-Type": "application/json","Authorization": f"Bearer {self.device_token}"}
-		# just using a range i know i have some recordings.
+		# just using a range I know I have some recordings.
 		recordings_from = "2022-09-25T00:00:00+00:00"
 		recordings_to = "2022-09-27T23:59:00+00:00"
 		retrieved_recordings = []
