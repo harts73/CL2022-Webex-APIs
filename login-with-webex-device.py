@@ -12,26 +12,25 @@ import requests
 
 
 class Image(qrcode.image.base.BaseImage):
-    # overriding the QR Code image creation, so it is in a format that we can give straight to pyqt
-    # you can ignore this code for the most part.
-    def __init__(self, border, width, box_size):
-        self.border = border
-        self.width = width
-        self.box_size = box_size
-        size = (width + border * 2) * box_size
-        self._image = QImage(size, size, QImage.Format.Format_RGB16)
-        self._image.fill(QtCore.Qt.GlobalColor.white)
+	# overriding the QR Code image creation, so it is in a format that we can give straight to pyqt
+	# you can ignore this code for the most part.
+	def __init__(self, border, width, box_size):
+		self.border = border
+		self.width = width
+		self.box_size = box_size
+		size = (width + border * 2) * box_size
+		self._image = QImage(size, size, QImage.Format.Format_RGB16)
+		self._image.fill(QtCore.Qt.GlobalColor.white)
 
-    def pixmap(self):
-        return QPixmap.fromImage(self._image)
+	def pixmap(self):
+		return QPixmap.fromImage(self._image)
 
-    def drawrect(self, row, col):
-        painter = QPainter(self._image)
-        painter.fillRect((col + self.border) * self.box_size, (row + self.border) * self.box_size, self.box_size,
-                         self.box_size, QtCore.Qt.GlobalColor.black)
+	def drawrect(self, row, col):
+		painter = QPainter(self._image)
+		painter.fillRect((col + self.border) * self.box_size, (row + self.border) * self.box_size, self.box_size, self.box_size, QtCore.Qt.GlobalColor.black)
 
-    def save(self, stream, kind=None):
-        pass
+	def save(self, stream, kind=None):
+		pass
 
 
 class MyWindow(QMainWindow):
