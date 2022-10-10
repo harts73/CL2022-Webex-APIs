@@ -11,7 +11,7 @@ import time
 
 
 # Example of how to use Login with Webex to authenticate a device E.g. TV.
-# Our scope in this one is simply to be able to read recordings for the logged in user.
+# Our scope in this one is simply to be able to read recordings for the logged-in user.
 
 
 class Image(qrcode.image.base.BaseImage):
@@ -110,7 +110,8 @@ class App(QMainWindow):
 				return False
 
 	def initUI(self):
-		img2 = self.webex_qr()
+		img2 = self.webex_qr()   # Let's generate the QR Code for authentication.
+		# format the window for the QR code to be displayed
 		self.qr_widget.setWindowTitle(self.title)
 		self.qr_widget.setGeometry(self.left, self.top, self.width, self.height)
 		label = QLabel(self)
@@ -137,7 +138,7 @@ class App(QMainWindow):
 		for recording in the_recordings:
 			list_widget.addItem(recording)
 			print(recording)
-		list_widget.itemDoubleClicked.connect(self.recording_selected)
+		#list_widget.itemDoubleClicked.connect(self.recording_selected)
 		vbox.addWidget(list_widget)
 		self.recording_widget.setLayout(vbox)
 		print("We should be about to show the List of recordings")
@@ -170,35 +171,6 @@ class App(QMainWindow):
 				self.all_recordings.append({"title": title, "playback": playback, "passcode": passcode})
 				retrieved_recordings.append(title)
 		return retrieved_recordings
-
-	def recording_selected(self, item):
-		#QApplication.processEvents()
-		print(self.all_recordings)
-		print(f"We got {item.text()}")
-		link = None
-		for recording in self.all_recordings:
-			if recording["title"] == item.text():
-				link = recording["playback"]
-				passcode = recording["passcode"]
-				print(link)
-				print(passcode)
-				break
-		if link:
-			self.new_window = ViewRecording(recording=link, passcode=passcode)
-			self.new_window.show()
-		else:
-			QMessageBox.information(self, "Pass Code","We didn't get a link for some reason.")
-
-
-class ViewRecording(QMainWindow):
-	def __init__(self, recording=None, passcode=None):
-		super().__init__()
-		message_text = f"Pass code is {passcode}"
-		QMessageBox.information(self, "Pass Code", message_text)
-		web = QWebEngineView()
-		web.load(QtCore.QUrl(recording))
-		web.show()
-
 
 
 if __name__ == '__main__':
