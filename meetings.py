@@ -11,11 +11,11 @@ meeting_start = "2022-10-18T11:00:00+11:00"
 meeting_end = "2022-10-18T11:30:00+11:00"
 invitees = [
     {
-        "email": "user1@chhartle.wbx.ai",
+        "email": "user1@domain",
         "coHost": True
     },
     {
-        "email": "user2@chhartle.wbx.ai"
+        "email": "user2@domain"
     }
 ]
 
