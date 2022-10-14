@@ -29,7 +29,6 @@ meeting_payload = {
 
 create_meeting = requests.post(meetings_url, headers=headers, json=meeting_payload)
 if create_meeting.status_code == 200:
-
     pprint.pprint(create_meeting.json())
 else:
     print(create_meeting.text)
