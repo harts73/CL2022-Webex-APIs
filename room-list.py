@@ -24,13 +24,11 @@ def init():
             # r_code = request.query_params['code']
             r_code = request.args.get('code')
         except:
-            #permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&redirect_uri={parsed_redirect_uri}&scope=spark%3Akms%20spark%3Apeople_read%20spark%3Arooms_read%20spark%3Amessages_write%20spark%3Arooms_write%20spark%3Amessages_read&state=MySuP3rdu9eRsTATe"
             permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&redirect_uri={parsed_redirect_uri}&scope={scopes}&state={state}"
             print("it is a GET request and no token")
             message = f"<html><body><h2>CL22 Room List Test.</h2><br>You need to authenticate with Webex Teams in order to give the Integration permissions to work on your behalf <a href={permissionURI} >Click Here to be redirected.</a></body></html>"
             return message
     if not r_code:
-        #permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&redirect_uri={parsed_redirect_uri}&scope=spark%3Akms%20spark%3Apeople_read%20spark%3Arooms_read%20spark%3Amessages_write%20spark%3Arooms_write%20spark%3Amessages_read&state=MySuP3rdu9eRsTATe"
         permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&redirect_uri={parsed_redirect_uri}&scope={scopes}&state={state}"
         print("it is a GET request and no token")
         message = f"<html><body><h2>CL22 Room List Test.</h2><br>You need to authenticate with Webex Teams in order to give the Integration permissions to work on your behalf <a href={permissionURI} >Click Here to be redirected.</a></body></html>"
