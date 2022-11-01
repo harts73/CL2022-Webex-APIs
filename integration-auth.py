@@ -17,6 +17,8 @@ def init():
     parsed_redirect_uri = urllib.parse.quote(redirect_uri, safe="=&!")
     client_id = os.getenv("CLIENT-ID")
     client_secret = os.getenv("CLIENT-SECRET")
+    scopes = os.getenv("SCOPES")
+    state = os.getenv("STATE")
     if request.method == "GET":
         try:
             # r_code = request.query_params['code']
