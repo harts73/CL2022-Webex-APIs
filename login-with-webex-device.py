@@ -53,9 +53,6 @@ class MyWindow(QMainWindow):
 
 		# 2 WIDGETS
 		self.wid1 = QWidget()
-		link = "https://www.cisco.com"
-		qr = qrcode.QRCode(version=1, box_size=10, border=5)
-		qr.add_data(link)
 		img2 = self.webex_qr()
 		label = QLabel(self)
 		label.setPixmap(img2)

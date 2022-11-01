@@ -89,6 +89,9 @@ def init():
 def show_token():
     the_token = session['token']
     the_user = session['email']
+    # blanking parts of the token for the demo
+    n = 10
+    the_token = the_token[:-n] + "XXXXXXXXXX"
     message = f"""<html><body><h2>CL22 Integration Test.</h2><br>Token retrieved for {the_user}</p><p>Token: 
     <br> {the_token}</body></html> """
     return message

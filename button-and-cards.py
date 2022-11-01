@@ -137,15 +137,19 @@ copied_payload = {
     "version": "1.2"
 }
 
+# this just makes it easier to create the card in the web interface and copy in
 card_json = [{
     "contentType": "application/vnd.microsoft.card.adaptive",
     "content": copied_payload
 }]
 
+# lets format the JSON message
 message = {"roomId": SPACE_ID, "text": "You should see a card and not this",
            "attachments": card_json}
 
 messages_url = "https://webexapis.com/v1/messages"
 
+# post the message
 send_message = requests.post(messages_url, json=message, headers=headers)
+# dump the results
 print(send_message.text)
