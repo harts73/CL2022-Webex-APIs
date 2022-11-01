@@ -19,6 +19,9 @@ def init():
     client_id = os.getenv("CLIENT-ID")
     client_secret = os.getenv("CLIENT-SECRET")
     code_verifier = os.getenv("CODE-VERIFIER")
+    print(len(code_verifier))
+    print(code_verifier)
+    state = os.getenv("STATE")
     hashed_verifier = hashlib.sha256(code_verifier.encode('ascii')).digest()
     code_challenge = base64.urlsafe_b64encode(hashed_verifier).decode('ascii')
     code_challenge = code_challenge.rstrip("=")
@@ -28,15 +31,13 @@ def init():
             # r_code = request.query_params['code']
             r_code = request.args.get('code')
         except:
-            permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&code_challenge_method=S256&code_challenge={code_challenge}&redirect_uri={parsed_redirect_uri}&scope=openid%20email%20profile&state=MySuP3rdu9eRsTATe"
-            #permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&code_challenge_method=plain&code_challenge={code_challenge}&redirect_uri={parsed_redirect_uri}&scope=openid%20email%20profile&state=MySuP3rdu9eRsTATe"
+            permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&code_challenge_method=S256&code_challenge={code_challenge}&redirect_uri={parsed_redirect_uri}&scope=openid%20email%20profile&state={state}"
             print("it is a GET request and no token")
             print(permissionURI)
             message = f"<html><body><h2>CL22 Integration Auth flow with PKCE Test.</h2><br>You need to authenticate with Webex Teams in order to give the Integration permissions to work on your behalf <a href={permissionURI} >Click Here to be redirected.</a></body></html>"
             return message
     if not r_code:
-        permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&code_challenge_method=S256&code_challenge={code_challenge}&redirect_uri={parsed_redirect_uri}&scope=openid%20email%20profile&state=MySuP3rdu9eRsTATe"
-        #permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&code_challenge_method=plain&code_challenge={code_challenge}&redirect_uri={parsed_redirect_uri}&scope=openid%20email%20profile&state=MySuP3rdu9eRsTATe"
+        permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&code_challenge_method=S256&code_challenge={code_challenge}&redirect_uri={parsed_redirect_uri}&scope=openid%20email%20profile&state={state}"
         print("it is a GET request and no token")
         print(permissionURI)
         message = f"<html><body><h2>CL22 Integration Auth flow with PKCE Test.</h2><br>You need to authenticate with Webex Teams in order to give the Integration permissions to work on your behalf <a href={permissionURI} >Click Here to be redirected.</a></body></html>"
@@ -94,8 +95,18 @@ def init():
     session['token'] = token
     session['email'] = emailaddress
     # SEND SUCCESS PAGE WITH OPTIONS.
-    message = f"""<html><body><h2>CL22 Integration Auth flow with PKCE Test.</h2><br>Token retrieved for {emailaddress}<br>
-        To view the token <a href="/token"> click here</a></p></body></html>"""
+    message = f"""<html><head>
+<style>
+code {{
+  font-family: Consolas,"courier new";
+  color: crimson;
+  background-color: #f1f1f1;
+  padding: 2px;
+  font-size: 105%;
+}}
+</style>
+</head><body><h2>CL22 Integration Auth flow with PKCE Test.</h2><br>Token retrieved for {emailaddress}<br>
+        To view the token <a href="/token"> click here</a></p><p>Information returned for the user<br><code>{who_am_i}</code></p></body></html>"""
     return message
 
 
