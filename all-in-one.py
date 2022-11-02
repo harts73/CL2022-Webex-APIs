@@ -3,6 +3,7 @@ import sys
 import os
 import requests
 import time
+import random
 import urllib.parse
 from flask import Flask, session, request
 
@@ -294,8 +295,8 @@ def show_meeting():
     print(list_invitees)
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {the_token}"}
     meetings_url = "https://webexapis.com/v1/meetings"
-    meeting_start = "2022-12-07T14:00:00+11:00"
-    meeting_end = "2022-12-07T14:30:00+11:00"
+    meeting_start = "2022-12-06T13:00:00+11:00"
+    meeting_end = "2022-12-06T13:30:00+11:00"
 
     invitees = []
     for email in list_invitees:
@@ -304,7 +305,7 @@ def show_meeting():
         })
     # create the meeting JSON payload. Just simple in this case
     meeting_payload = {
-        "title": "Cisco Live Test Meeting 4",
+        "title": f"Cisco Live Test Meeting {random.randint(0,10000)}",
         "start": meeting_start,
         "end": meeting_end,
         "invitees": invitees,
