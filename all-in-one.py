@@ -106,6 +106,7 @@ code {{
     <p>To view the admin audit <a href="/audit"> click here</a></p>
     <p>To view the space widget <a href="/space"> click here</a></p>
     <p>To Create Meeting <a href="/meeting"> click here</a></p>
+    <p>To view Historical Analytics - Messaging <a href="/analytics"> click here</a></p>
     <p>To view the token <a href="/token"> click here</a></p>
     <p><code>{json_spark}</code></p>
     </body></html>"""
@@ -129,6 +130,7 @@ def show_home():
         <p>To view the admin audit <a href="/audit"> click here</a></p>
         <p>To view the space widget <a href="/space"> click here</a></p>
         <p>To Create Meeting <a href="/meeting"> click here</a></p>
+        <p>To view Historical Analytics - Messaging <a href="/analytics"> click here</a></p>
         <p>To view the token <a href="/token"> click here</a></p>
         </body></html>"""
     return message
@@ -338,6 +340,45 @@ def show_meeting():
         <tr><td><b>Meeting SIP Address</b></td><td>{meeting_sip}</td></tr>
         </table>
         <p>Home <a href="/home"> click here</a></p></body></html> """
+    return message
+
+
+@app.route('/analytics', methods=['GET', 'POST'])
+def show_analytics():
+    the_token = session['token']
+    the_user = session['email']
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {the_token}"}
+    start = "2022-10-06"
+    end = "2022-11-01"
+    url = f"https://analytics.webexapis.com/v1/analytics/messagingMetrics/dailyTotals?from={start}&to={end}"
+    get_messaging_totals = requests.get(url, headers=headers)
+
+    if get_messaging_totals.status_code != 200:
+        print(f"We had an error getting the totals.\n{get_messaging_totals.text}")
+        html_tables = f"<h4>We had an error getting the totals.\n{get_messaging_totals.text}</h4>"
+    else:
+        totals_json = get_messaging_totals.json()
+        print(totals_json)
+        a = 0
+        the_dates = totals_json["metrics"]["dates"]
+        a = 0
+        html_tables = ""
+        while a < len(the_dates):
+            html_tables = html_tables + f"""<h4>Date: {totals_json['metrics']['dates'][a]}</h4>
+            <table>
+                <tr><td>Daily Active Users</td><td>{totals_json['metrics']['dailyActiveUsers'][a]}</td></tr>
+                <tr><td>Total Active Spaces</td><td>{totals_json['metrics']['totalActiveSpaces'][a]}</td></tr>
+                <tr><td>Total Messages Sent</td><td>{totals_json['metrics']['totalMessagesSent'][a]}</td></tr>
+            </table><br>
+            """
+            print(f"DATE: {totals_json['metrics']['dates'][a]}")
+            print(f"\tDaily Active Users:  {totals_json['metrics']['dailyActiveUsers'][a]}")
+            print(f"\tTotal Active Spaces: {totals_json['metrics']['totalActiveSpaces'][a]}")
+            print(f"\tTotal Messages Sent: {totals_json['metrics']['totalMessagesSent'][a]}")
+            a = a + 1
+    message = f"""<html><body><h2>CL22 All in One Test.</h2><br><b><h3>Historical Analytics - Messaging:</h3>
+            {html_tables}
+            <p>Home <a href="/home"> click here</a></p></body></html> """
     return message
 
 
