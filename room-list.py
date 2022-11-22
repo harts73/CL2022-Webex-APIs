@@ -111,7 +111,7 @@ code {{
 
 
 @app.route('/list', methods=['GET', 'POST'])
-def show_token():
+def show_list():
     the_token = session['token']
     the_user = session['email']
     # let's get the list of rooms going to sort by lastactivity. Title should be fine for this example, in the real world you would want the id
