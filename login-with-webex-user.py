@@ -28,7 +28,6 @@ def init():
     print(code_challenge)
     if request.method == "GET":
         try:
-            # r_code = request.query_params['code']
             r_code = request.args.get('code')
         except:
             permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&code_challenge_method=S256&code_challenge={code_challenge}&redirect_uri={parsed_redirect_uri}&scope=openid%20email%20profile&state={state}"
@@ -58,8 +57,6 @@ def init():
         message = f"<html><body><h2>CL22 Integration Auth flow with PKCE Test.</h2><br>Some error trying to get the token. <p>{myrequest.text}</p></body></html>"
         return message
     print(f"JSON is \n {json_spark}")
-    # token = json_spark['access_token']
-    # print(f"1 {token}")
     try:
         token = json_spark['access_token']
     except:

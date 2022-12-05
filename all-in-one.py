@@ -22,9 +22,8 @@ def init():
     client_secret = os.getenv("CLIENT-SECRET")  # This is from the integration
     scopes = os.getenv("SCOPES")  # This is from the integration
     state = os.getenv("STATE")  # optional. You can use this to verify it is Webex after the authentication and authorisation by the user
-    if request.method == "GET":  # GET should indicate it is first time to the page but checking if code is there just in case
+    if request.method == "GET":
         try:
-            # r_code = request.query_params['code']
             r_code = request.args.get('code')
         except:
             permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&redirect_uri={parsed_redirect_uri}&scope={scopes}&state={state}"
@@ -39,7 +38,6 @@ def init():
 
     print(f"Code is {r_code}")
     print("trying to get the token")
-    # r_code = request.args.get('code')
     # time to get the token for the integration
     data = f"grant_type=authorization_code&redirect_uri={redirect_uri}&code={r_code}&client_id={client_id}&client_secret={client_secret}"
     url = "https://webexapis.com/v1/access_token"
@@ -54,8 +52,6 @@ def init():
         message = f"<html><body><h2>CL22 All in One Test.</h2><br>Some error trying to get the token. <p>{myrequest.text}</p></body></html>"
         return message
     print(f"JSON is \n {json_spark}")
-    # token = json_spark['access_token']
-    # print(f"1 {token}")
     try:
         token = json_spark['access_token']  # if we have JSON we should have an access_token among other things
     except:
