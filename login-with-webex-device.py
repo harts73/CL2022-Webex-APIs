@@ -106,7 +106,7 @@ class MyWindow(QMainWindow):
 	def webex_qr(self):
 		# get the URL and create the QR code.
 		webex_auth_url = f"https://webexapis.com/v1/device/authorize"
-		webex_auth_params = f"client_id={self.ci}&scope=meeting%3Arecordings_read%20spark%3Akms"
+		webex_auth_params = f"client_id={self.ci}&scope=meeting%3Arecordings_read%20spark%3Akms"  # It has some recording scopes to list recordings later
 		auth_headers = {"Content-Type": "application/x-www-form-urlencoded"}
 		try:
 			webex_auth_request = requests.post(webex_auth_url, params=webex_auth_params, headers=auth_headers)
@@ -114,13 +114,13 @@ class MyWindow(QMainWindow):
 			print(f"ERROR {webex_auth_request.status_code}  {webex_auth_request.text}")
 		webex_auth_json = webex_auth_request.json()
 		print(webex_auth_json)
-		link = webex_auth_json["verification_uri_complete"]
+		link = webex_auth_json["verification_uri_complete"]  # this is the URI to create a QR code with
 		self.auth_interval = webex_auth_json["interval"]
 		self.auth_device_code = webex_auth_json["device_code"]
 		print(link)
 		qr = qrcode.QRCode(version=1, box_size=10, border=5)
 		qr.add_data(link)
-		return qrcode.make(link, image_factory=Image).pixmap()
+		return qrcode.make(link, image_factory=Image).pixmap()  # PyQt and standard qrcode not working well, have to manipulate the image
 
 	def webex_token(self):
 		webex_token_url = "https://webexapis.com/v1/device/token"
@@ -142,7 +142,7 @@ class MyWindow(QMainWindow):
 				self.device_token = token_json["access_token"]
 				print(token_json)
 				return True
-			elif webex_token_request.status_code == 428:
+			elif webex_token_request.status_code == 428:  # we got precondition required. Need to wait
 				print("we need to wait for the user still, they have 2 minutes in this script. Sleeping for 10 seconds")
 				time.sleep(10)
 			else:

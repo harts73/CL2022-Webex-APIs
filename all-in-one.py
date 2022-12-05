@@ -5,6 +5,9 @@ import requests
 import time
 import random
 import urllib.parse
+import jwt
+import datetime
+import base64
 from flask import Flask, session, request
 
 app = Flask(__name__)
@@ -13,13 +16,13 @@ app.secret_key = os.getenv("SESSION-KEY")  # needed for encryption of the sessio
 
 @app.route('/int', methods=['GET'])
 def init():
-    redirect_uri = os.getenv("REDIRECT")
+    redirect_uri = os.getenv("REDIRECT")  # This is from the integration
     parsed_redirect_uri = urllib.parse.quote(redirect_uri, safe="=&!")
-    client_id = os.getenv("CLIENT-ID")
-    client_secret = os.getenv("CLIENT-SECRET")
-    scopes = os.getenv("SCOPES")
-    state = os.getenv("STATE")
-    if request.method == "GET":
+    client_id = os.getenv("CLIENT-ID")  # This is from the integration
+    client_secret = os.getenv("CLIENT-SECRET")  # This is from the integration
+    scopes = os.getenv("SCOPES")  # This is from the integration
+    state = os.getenv("STATE")  # optional. You can use this to verify it is Webex after the authentication and authorisation by the user
+    if request.method == "GET":  # GET should indicate it is first time to the page but checking if code is there just in case
         try:
             # r_code = request.query_params['code']
             r_code = request.args.get('code')
@@ -28,7 +31,7 @@ def init():
             print("it is a GET request and no token")
             message = f"<html><body><h2>CL22 All in One Test.</h2><br>You need to authenticate with Webex Teams in order to give the Integration permissions to work on your behalf <a href={permissionURI} >Click Here to be redirected.</a></body></html>"
             return message
-    if not r_code:
+    if not r_code:  # So it was not a GET but we don't have a code so we need the initial page anyway
         permissionURI = f"https://webexapis.com/v1/authorize?client_id={client_id}&response_type=code&redirect_uri={parsed_redirect_uri}&scope={scopes}&state={state}"
         print("it is a GET request and no token")
         message = f"<html><body><h2>CL22 All in One Test.</h2><br>You need to authenticate with Webex Teams in order to give the Integration permissions to work on your behalf <a href={permissionURI} >Click Here to be redirected.</a></body></html>"
@@ -37,13 +40,15 @@ def init():
     print(f"Code is {r_code}")
     print("trying to get the token")
     # r_code = request.args.get('code')
+    # time to get the token for the integration
     data = f"grant_type=authorization_code&redirect_uri={redirect_uri}&code={r_code}&client_id={client_id}&client_secret={client_secret}"
     url = "https://webexapis.com/v1/access_token"
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     myrequest = requests.post(url, headers=headers, params=data, verify=False)
     print(myrequest.text)
+    # a little but lazy here. Should really do error checking on status codes.
     try:
-        json_spark = myrequest.json()
+        json_spark = myrequest.json()  # if successful we should get JSON from Webex
     except:
         print("Failed to read JSON response", sys.exc_info())
         message = f"<html><body><h2>CL22 All in One Test.</h2><br>Some error trying to get the token. <p>{myrequest.text}</p></body></html>"
@@ -52,13 +57,13 @@ def init():
     # token = json_spark['access_token']
     # print(f"1 {token}")
     try:
-        token = json_spark['access_token']
+        token = json_spark['access_token']  # if we have JSON we should have an access_token among other things
     except:
         print("Failed to get token from JSON", sys.exc_info())
         message = "<html><body><h2>CL22 All in One Test.</h2><br>Some error.</body></html>"
         return message
     print(f"Token received {token}")
-    # need to get the userid
+    # lets validate the token and get the userid/email of the user
     people_url = "https://webexapis.com/v1/people/me"
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {token}"
@@ -68,7 +73,7 @@ def init():
     s = "X" * n
     blanked_token = s + token[n:-n] + s
     refresh_token = json_spark['refresh_token']
-    blanked_refresh = refresh_token = s + token[n:-n] + s
+    blanked_refresh = refresh_token = s + token[n:-n] + s   # masking the token to put to the webpage
     json_spark['access_token'] = blanked_token
     json_spark['refresh_token'] = blanked_refresh
     try:
@@ -79,13 +84,14 @@ def init():
     print(who_am_i_req.text)
     try:
         who_am_i = who_am_i_req.json()
-        for email in who_am_i['emails']:
+        for email in who_am_i['emails']:   # emails is a list but for the most part will be only one.
             emailaddress = email
             break
     except:
         print("Failed to get email from JSON", sys.exc_info())
         message = f"<html><body><h2>CL22 All in One Test.</h2><br>Some error trying to get my details.<p>{who_am_i_req}</p></body></html>"
         return message
+    # keeping the token in sessions so i can switch between pages and not lose it.
     session['token'] = token
     session['email'] = emailaddress
     print(f"JSON is \n {json_spark}")
@@ -175,10 +181,37 @@ def show_token():
 
 @app.route('/space', methods=['GET', 'POST'])
 def show_space():
-    the_token = session['token']
-    the_user = session['email']
+    # guest issuer
+    issuer_id = os.getenv("ISSUER")
+    issuer_secret = base64.b64decode(
+        os.getenv("GUEST_SECRET"))  # we need to make sure we base64decode the secret obtained from the developer page
+    print(issuer_secret)
+    now = datetime.datetime.now(tz=datetime.timezone.utc)
+    print(int(now.timestamp()))
+    exp = now + datetime.timedelta(minutes=10)
+    exp = int(exp.timestamp())
+    print(exp)
+    guest_header2 = {"typ": "JWT", "alg": "HS256"}
+    guest_payload2 = {"sub": "test-Guest-1",
+                      "name": "CL2022 Guest",
+                      "iss": issuer_id,
+                      "exp": str(exp)}
+
+    guest_token = jwt.encode(guest_payload2, issuer_secret, algorithm="HS256", headers=guest_header2)
+    print(guest_token)
+    print(jwt.decode(guest_token, issuer_secret, algorithms="HS256", headers=guest_header2))
+
+    # with the guest token you can use the SDK directly making sure to pick the token option correctly.
+    # otherwise you can get a token from
+    token_url = "https://webexapis.com/v1/jwt/login"
+    headers = {"Content-Type": "application/json",
+               "Accept": "application/json",
+               "Authorization": f"Bearer {guest_token}"
+               }
+    token_req = requests.post(token_url, headers=headers)
+    token_json = token_req.json()
+    the_token = token_json['token']
     email = os.getenv("EMAIL")
-    print(email)
 
     message = f"""
     <!-- Latest compiled and minified CSS -->

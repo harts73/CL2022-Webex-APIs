@@ -9,7 +9,7 @@ import pprint
 
 
 issuer_id = os.getenv("ISSUER")
-issuer_secret = base64.b64decode(os.getenv("SECRET"))  # we need to make sure we base64decode the secret obtained from the developer page
+issuer_secret = base64.b64decode(os.getenv("GUEST_SECRET"))  # we need to make sure we base64decode the secret obtained from the developer page
 print(issuer_secret)
 now = datetime.datetime.now(tz=datetime.timezone.utc)
 print(int(now.timestamp()))

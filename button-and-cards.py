@@ -7,7 +7,7 @@ SPACE_ID = os.getenv("SPACE_ID")
 
 headers = {"Content-Type": "application/json", "Authorization": f"Bearer {ACCESS_TOKEN}"}
 
-# make sure to convert true to True
+# make sure to convert true to True. The below is copied directly from the card designer on developer.webex.com
 copied_payload = {
     "type": "AdaptiveCard",
     "body": [

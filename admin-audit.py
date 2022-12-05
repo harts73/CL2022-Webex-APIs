@@ -7,18 +7,15 @@ import os
 
 admin_token = os.getenv("ACCESS_TOKEN")
 org_id = os.getenv("ORG_ID")
-
 # Specifying a Start and End date to query for admin audit events
 start_date = "2022-01-01T00:00:00.000Z"
 end_date = "2022-12-31T23:59:59.000Z"
-
 # compose the URL
 url = f"https://webexapis.com/v1/adminAudit/events?orgId={org_id}&from={start_date}&to={end_date}&max=200"
 headers = {"Content-Type": "application/json",
            "Accept": "application/json",
            "Authorization": f"Bearer {admin_token}"
            }
-
 # we are going to handle pagination, if there are more than 200 records we need to get the rest
 more_results = True
 customer_events = []
